@@ -238,15 +238,39 @@ def New_order(request):
                 return JsonResponse({'message': '新建销售订单成功'})
             else:
                 return JsonResponse({'message': '出错啦'})
-        return JsonResponse({'message': '没有定义的id'})
+        return JsonResponse({'message': '操作未定义'})
 
     else:
         return JsonResponse({'message': '请求方式错误'})
 
 
+# 获取token
 @csrf_exempt
 def get_id(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         id = data.get('id')
         return JsonResponse({'id': id})
+
+
+# 环比增长计算
+@csrf_exempt
+def huanbi(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        response = []
+
+        for item in data['items']:
+            q1 = float(item.get('q1', 0))
+            q2 = float(item.get('q2', 0))
+
+            if q1 == 0:
+                response.append({'error': f'除数不能为零'})
+            else:
+                c = ((q2 - q1) / q1)
+                result = round(c * 100, 2)
+                response.append({'result': f'{result}%'})
+
+        return JsonResponse({'results': response})
+    else:
+        return JsonResponse({'results': '请求方式错误'})
