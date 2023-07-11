@@ -247,10 +247,12 @@ def New_order(request):
 # 获取token
 @csrf_exempt
 def get_id(request):
-    if request.method == 'POST':
+    if request.method == 'GET':
         data = json.loads(request.body)
         id = data.get('id')
         return JsonResponse({'id': id})
+    else:
+        return JsonResponse('出问题啦')
 
 
 # 环比增长计算
