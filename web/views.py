@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import requests, datetime, random, json
+import requests, datetime, random, json, pymysql
 from variable import public_variable
 
 # 公共变量
@@ -276,3 +276,54 @@ def huanbi(request):
         return JsonResponse({'results': response})
     else:
         return JsonResponse({'results': '请求方式错误'})
+
+
+@csrf_exempt
+def search(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        nickname = data.get("nickname")
+
+        conn1 = pymysql.connect(
+            host="192.168.0.21",
+            user="root",
+            password="huazhou@123456",
+            database="mg_customer"
+        )
+        cur1 = conn1.cursor()
+
+        query1 = f"SELECT id FROM mg_customer.hz_users WHERE nickname='{nickname}'"
+
+        cur1.execute(query1)
+        result1 = cur1.fetchall()
+        id_value1 = result1[0][0]
+
+        cur1.close()
+        conn1.close()
+
+        conn2 = pymysql.connect(
+            host="192.168.0.21",
+            user="root",
+            password="huazhou@123456",
+            database="hz_sso"
+        )
+        cur2 = conn2.cursor()
+
+        query2 = f"SELECT id FROM hz_sso.hz_users WHERE nickname='{nickname}'"
+
+        cur2.execute(query2)
+        result2 = cur2.fetchall()
+        id_value2 = result2[0][0]
+
+        cur2.close()
+        conn2.close()
+
+        data = {
+            "zslj_id": id_value1,
+            "yydn_id": id_value2
+        }
+
+        # 返回 JSON 响应
+        return JsonResponse(data)
+    else:
+        return JsonResponse({'message': '请求方式错误'})
