@@ -6,6 +6,9 @@ from variable import public_variable
 # 公共变量
 tk = public_variable.APIHelper.tk
 jk_url = public_variable.APIHelper.jk_url
+zs_tk = public_variable.APIHelper.zs_tk
+zs_url = public_variable.APIHelper.zs_url
+
 null = None
 false = False
 true = True
@@ -28,7 +31,7 @@ def get_serial_numbers(request, materiel_pcode):
 @csrf_exempt
 def New_order(request):
     # 定义逻辑
-    # id={1；新建采购订单   2：新建采购资金平台订单   3：新建销售订单}
+    # id={1；新建采购订单   2：新建采购资金平台订单   3：新建销售订单  4:新增客户}
     # 获取当前年份
     current_year = datetime.datetime.now().year
     # 获取当前日期
@@ -238,21 +241,82 @@ def New_order(request):
                 return JsonResponse({'message': '新建销售订单成功'})
             else:
                 return JsonResponse({'message': '出错啦'})
+
+            # 如果id=4，处理新建客户
+        elif id == 4:
+            # 随机选择一个城市名称
+            city_list = ['北京', '上海', '广州', '深圳', '杭州', '成都', '武汉']
+            city = random.choice(city_list)
+
+            # 随机选择一个形容词
+            adjective_list = ['新时代', '创新', '和谐', '阳光', '辉煌', '蓬勃', '卓越', '积极', '优质', '先进']
+            adjective = random.choice(adjective_list)
+
+            # 随机选择一个名词作为公司类型的一部分
+            noun_list = ['企业', '集团', '科学', '有限公司']
+            noun = random.choice(noun_list)
+
+            # 生成公司名称
+            company_name = city + adjective + noun
+
+            kh_url = f'{zs_url}customer'
+            kh_heads = {'Content-Type': 'application/json;charset=UTF-8', 'Authorization': f'Bearer {zs_tk}'}
+            kh_data = {"cust_admin_id": 124, "cust_name": f"{company_name}", "cust_nature": "1",
+                       "cust_attr_type": 265, "cust_source": 267}
+            response = requests.post(url=kh_url, headers=kh_heads, json=kh_data)
+            kh_id = response.json()['data']['id']
+            cust_no = response.json()['data']['cust_no']
+
+            # 编辑客户转审批
+            # 姓名列表
+            first_names = ['张', '李', '王', '赵', '陈', '刘', '周', '吴', '黄', '许']
+            last_names = ['明', '丽', '伟', '秀', '强', '静', '军', '兰', '芳', '健']
+
+            # 随机生成姓名
+            first_name = random.choice(first_names)
+            last_name = random.choice(last_names)
+            full_name = first_name + last_name
+
+            # 随机生成手机号码
+            phone_number = '1' + ''.join(random.choices('3456789', k=9))
+            zz_url = f'{zs_url}Customer/{kh_id}'
+            zz_heads = {'Content-Type': 'application/json;charset=UTF-8', 'Authorization': f'Bearer {zs_tk}'}
+            zz_data = {"id": "5143", "is_fingercust": 0, "cust_parent_type": 1, "cust_no": f'{cust_no}',
+                       "cust_name": f"{company_name}", "cust_nemonic_name": null, "cust_province": 0,
+                       "cust_city": [7362, 7363, 7434], "cust_area": 0, "invoice_header": null, "address_phone": null,
+                       "no": null, "bank_number": null, "mailbox": null, "cust_address": "随机的地址",
+                       "cust_industry": [9], "cust_manager_name": "销售权限测试账号", "cust_level": null,
+                       "cust_letter": null, "cust_source": 268, "cust_parent_id": null, "cust_scale": 281,
+                       "cust_state": 1, "cust_nature": "1", "cust_attr_type": 266, "cust_tag": null,
+                       "approve_status": 0, "cust_admin_id": 124, "creator_id": null, "image": null, "link_no": null,
+                       "link_cust_no": null, "cust_code": null, "link_name": f"{full_name}", "link_sex": 1,
+                       "link_position": null, "link_telephone": null, "link_mobile": f"{phone_number}",
+                       "link_fax": null,
+                       "link_birthday": null, "link_part": 274, "link_qq": null, "link_remark": null,
+                       "link_province": null, "link_city": [null, null, null], "link_area": null, "link_address": null,
+                       "link_wx": null, "link_email": null, "link_is_default": null, "created_at": null,
+                       "updated_at": null, "deleted_at": null, "follow_time": null, "follow_content": null,
+                       "follow_admin_id": null, "task_remind": null, "remind_way": null, "first_follow_time": null,
+                       "channel": "", "level": "", "product": [], "property": [], "serve_type": null,
+                       "start_status": null, "cust_status": "", "property_name": [], "cust_nature_name": "客户",
+                       "channel_name": "", "level_name": "", "product_name": [], "cust_state_name": "预分配客户",
+                       "cust_industry_name": "", "cust_level_name": "", "fileList": [], "cust_source_name": "浪潮电销",
+                       "cust_attr_type_name": "B类客户", "link_part_name": "B类客户", "file": [{
+                    "url": "https://hzdefault-1304855126.cos.ap-nanjing.myqcloud.com/gjxy/115f276c769575cc4904996296bcdb11.png",
+                    "name": "头像.png",
+                    "suffix": "png"}],
+                       "relevant": [], "is_emphasis": "1", "type": 2}
+            response = requests.put(url=zz_url, headers=zz_heads, json=zz_data)
+            r = response.json()['message']
+            if r == 'success':
+                return JsonResponse({'message': '新建客户成功'})
+            else:
+                return JsonResponse({'message': '出错啦'})
+
         return JsonResponse({'message': '操作未定义'})
 
     else:
         return JsonResponse({'message': '请求方式错误'})
-
-
-# 获取token
-@csrf_exempt
-def get_id(request):
-    if request.method == 'GET':
-        data = json.loads(request.body)
-        id = data.get('id')
-        return JsonResponse({'id': id})
-    else:
-        return JsonResponse('出问题啦')
 
 
 # 环比增长计算
@@ -278,12 +342,13 @@ def huanbi(request):
         return JsonResponse({'results': '请求方式错误'})
 
 
+# 统一用户查询id
 @csrf_exempt
 def search(request):
     if request.method == "POST":
         data = json.loads(request.body)
         nickname = data.get("nickname")
-
+        # 查询智圣鳞甲id
         conn1 = pymysql.connect(
             host="192.168.0.21",
             user="root",
@@ -301,6 +366,7 @@ def search(request):
         cur1.close()
         conn1.close()
 
+        # 查询运营大脑id
         conn2 = pymysql.connect(
             host="192.168.0.21",
             user="root",
@@ -321,6 +387,37 @@ def search(request):
         data = {
             "zslj_id": id_value1,
             "yydn_id": id_value2
+        }
+
+        # 返回 JSON 响应
+        return JsonResponse(data)
+    else:
+        return JsonResponse({'message': '请求方式错误'})
+
+
+# 根据商机编号查询关联id
+def create(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        business_sn = data.get("business_sn")
+        conn = pymysql.connect(
+            host="192.168.0.21",
+            user="root",
+            password="huazhou@123456",
+            database="mg_data"
+        )
+        cur = conn.cursor()
+
+        query = f'SELECT create_id  FROM mg_data.mg_business_opportunity WHERE business_sn="{business_sn}"'
+
+        cur.execute(query)
+        result = cur.fetchall()
+        id_value = result[0][0]
+
+        cur.close()
+        conn.close()
+        data = {
+            "create_id": id_value
         }
 
         # 返回 JSON 响应
